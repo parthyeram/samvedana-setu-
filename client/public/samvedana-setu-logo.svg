@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 930">
+  <defs>
+    <linearGradient id="arc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1688D4"/>
+      <stop offset="52%" stop-color="#11A89D"/>
+      <stop offset="100%" stop-color="#F28A20"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Connection arc -->
+  <path d="M300 455 A300 300 0 0 1 900 455"
+        fill="none" stroke="url(#arc)" stroke-width="28" stroke-linecap="round"/>
+
+  <!-- People -->
+  <g>
+    <circle cx="445" cy="290" r="35" fill="#1688D4"/>
+    <path d="M390 335 Q445 385 500 335 L475 455 L445 410 L415 455 Z" fill="#1688D4"/>
+
+    <circle cx="600" cy="245" r="38" fill="#079C91"/>
+    <path d="M535 305 Q600 370 665 305 L630 470 L600 420 L570 470 Z" fill="#079C91"/>
+
+    <circle cx="755" cy="290" r="35" fill="#F28A20"/>
+    <path d="M700 335 Q755 385 810 335 L785 455 L755 410 L725 455 Z" fill="#F28A20"/>
+  </g>
+
+  <!-- Bridge -->
+  <path d="M255 555 Q600 380 945 555 L965 620 Q600 455 235 620 Z"
+        fill="#0A315B"/>
+  <path d="M285 565 Q600 425 915 565" fill="none"
+        stroke="white" stroke-width="9"/>
+  <path d="M270 590 Q600 445 930 590" fill="none"
+        stroke="white" stroke-width="7"/>
+
+  <!-- Bridge pillars -->
+  <g fill="#0A315B">
+    <path d="M355 500 L390 480 L390 700 L355 680 Z"/>
+    <path d="M582 425 L618 425 L618 735 L582 735 Z"/>
+    <path d="M810 480 L845 500 L845 680 L810 700 Z"/>
+  </g>
+
+  <!-- Bridge arch -->
+  <path d="M410 615 Q600 480 790 615 L790 745 L755 725 L755 650 Q600 550 445 650 L445 725 L410 745 Z"
+        fill="#0A315B"/>
+
+  <!-- Community / city -->
+  <g fill="#0A315B">
+    <rect x="500" y="650" width="55" height="105" rx="2"/>
+    <rect x="565" y="610" width="55" height="145" rx="2"/>
+    <path d="M625 690 L665 655 L705 690 L705 755 L625 755 Z"/>
+  </g>
+  <g fill="white">
+    <rect x="515" y="670" width="10" height="14"/><rect x="538" y="670" width="10" height="14"/>
+    <rect x="515" y="700" width="10" height="14"/><rect x="538" y="700" width="10" height="14"/>
+    <rect x="580" y="635" width="10" height="14"/><rect x="603" y="635" width="10" height="14"/>
+    <rect x="580" y="665" width="10" height="14"/><rect x="603" y="665" width="10" height="14"/>
+    <rect x="580" y="695" width="10" height="14"/><rect x="603" y="695" width="10" height="14"/>
+  </g>
+
+  <!-- House -->
+  <path d="M635 705 L665 680 L695 705 V755 H635 Z" fill="#0A315B"/>
+  <rect x="658" y="720" width="14" height="35" fill="white"/>
+
+  <!-- Tree -->
+  <rect x="735" y="690" width="12" height="65" fill="#0A315B"/>
+  <circle cx="741" cy="665" r="45" fill="#65B82E"/>
+  <circle cx="715" cy="680" r="30" fill="#65B82E"/>
+  <circle cx="767" cy="680" r="30" fill="#65B82E"/>
+
+  <!-- Ground -->
+  <path d="M475 755 Q600 710 770 755 Q620 810 475 755 Z" fill="#11A89D"/>
+
+  <!-- Brand name -->
+  <text x="600" y="900" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="88" font-weight="700"
+        fill="#0A315B">Samvedana<tspan fill="#079C91">Setu</tspan></text>
+
+</svg>

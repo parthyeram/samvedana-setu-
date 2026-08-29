@@ -1,0 +1,16 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { getMyInterests } from '../../api/client';
+
+const opportunities = [['Smart irrigation system', '96%', 'IoT · Water monitoring'], ['Pothole detection system', '91%', 'Computer vision · Smart cities'], ['Waste management optimization', '88%', 'Logistics · Sustainability']];
+export default function IndustryDashboard() {
+  const [items, setItems] = useState([]);
+  useEffect(() => { getMyInterests().then(response => setItems(response.data?.data || [])).catch(() => {}); }, []);
+  const pending = items.filter(item => ['interest_submitted', 'pending'].includes(item.status)).length;
+  const accepted = items.filter(item => item.status === 'accepted').length;
+  const declined = items.filter(item => item.status === 'declined').length;
+  const active = items.filter(item => item.status === 'accepted' && item.projectId).length;
+  const max = Math.max(pending, accepted, declined, active, 1);
+  const bars = [['Requests', pending, 'var(--setu-cyan)'], ['Accepted', accepted, 'var(--green-500)'], ['Active', active, '#f5b942'], ['Declined', declined, '#ef6b73']];
+  return <div><div className="page-head"><h2>Industry partner dashboard</h2><p>Track collaboration requests, accepted projects, and support delivered to communities.</p></div><div className="stat-grid"><div className="card card-pad"><span className="text-muted">Collaboration requests</span><h2>{items.length}</h2></div><div className="card card-pad"><span className="text-muted">Accepted collaborations</span><h2>{accepted}</h2></div><div className="card card-pad"><span className="text-muted">Active projects</span><h2>{active}</h2></div><div className="card card-pad"><span className="text-muted">Declined requests</span><h2>{declined}</h2></div></div><div className="card card-pad" style={{ marginTop: 20 }}><h3>Industry collaboration analytics</h3><p className="text-muted">Live column chart from your collaboration activity.</p><div style={{ display: 'flex', alignItems: 'end', gap: 30, height: 220, padding: '20px 30px 0', borderBottom: '1px solid var(--border)' }}>{bars.map(([label, value, color]) => <div key={label} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'end', gap: 8 }}><b>{value}</b><div style={{ width: 'min(70px, 80%)', height: `${Math.max(8, value / max * 150)}px`, background: color, borderRadius: '8px 8px 0 0' }} /><span className="text-muted">{label}</span></div>)}</div></div><div className="card" style={{ marginTop: 20 }}><div className="card-head"><div><h3>AI-matched opportunities</h3><p className="text-muted">Review verified problems that match your capabilities.</p></div><Link className="btn btn-secondary btn-sm" to="/industry/collaborations">Explore</Link></div>{opportunities.map(([name, score, skills]) => <div key={name} className="card-pad" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, borderTop: '1px solid var(--border)' }}><span><b>{name}</b><small style={{ display: 'block', color: 'var(--text-muted)' }}>{skills}</small></span><strong style={{ color: 'var(--green-700)' }}>{score}</strong><Link className="btn btn-primary btn-sm" to="/industry/collaborations">Review</Link></div>)}</div></div>;
+}

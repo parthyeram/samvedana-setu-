@@ -1,0 +1,3 @@
+import React, { useEffect, useState } from 'react';
+import { getAnalyticsOverview } from '../../api/client';
+export default function Analytics() { const [data, setData] = useState({}); useEffect(() => { getAnalyticsOverview().then(r => setData(r.data?.data || {})); }, []); return <div><div className="page-head"><h2>Government impact analytics</h2><p>District, sector, verification, project, and resolution trends.</p></div><div className="stat-grid">{[['Total reports', data.total], ['Pending verification', data.pending], ['Active projects', data.active], ['Resolved', data.resolved]].map(([l, v]) => <div className="card card-pad" key={l}><span className="text-muted">{l}</span><h2>{v ?? '...'}</h2></div>)}</div></div>; }

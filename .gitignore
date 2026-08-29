@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Secret environment files
+.env
+server/.env
+client/.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Frontend build files
+client/dist/
+
+# Local database
+server/prisma/dev.db
+server/prisma/*.db-journal
+
+# Uploaded files
+uploads/
+server/uploads/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Editor settings
+.vscode/
+.idea/

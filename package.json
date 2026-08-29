@@ -1,0 +1,35 @@
+{
+  "name": "samvedanasetu",
+  "version": "1.0.0",
+  "description": "SamvedanaSetu — AI-powered Societal Challenge Reporting & Institution Matching platform (Prototype)",
+  "type": "module",
+  "main": "server/server.js",
+  "scripts": {
+    "server": "npm --prefix server run dev",
+    "client": "npm --prefix client run dev",
+    "dev": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "build:client": "npm --prefix client run build",
+    "seed": "npm --prefix server run db:seed",
+    "db:reset": "npm --prefix server run db:reset",
+    "test": "npm --prefix server test"
+  },
+  "keywords": [
+    "civic-tech",
+    "gov-tech",
+    "gemini-api",
+    "multimodal-ai",
+    "leaflet",
+    "chart.js",
+    "prototype"
+  ],
+  "author": "SamvedanaSetu Prototype Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

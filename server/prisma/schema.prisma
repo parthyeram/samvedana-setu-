@@ -1,0 +1,307 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  email               String   @unique
+  passwordHash        String
+  role                String // citizen, student, faculty_mentor, university_admin, industry_partner, govt_official, admin
+  citizenId           String?  @unique
+  universityId        Int?
+  industryOrgId       Int?
+  district            String?
+  block               String?
+  village             String?
+  phone               String?
+  languagePref        String   @default("en") // en or hi
+  accountStatus       String   @default("active") // active, pending, rejected
+  designation         String?
+  department          String?
+  governmentId        String?
+  address             String?
+  registrationId      String?
+  industryType        String?
+  expertise           String   @default("[]")
+  preferredCategories String   @default("[]")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  university    Institution?   @relation(fields: [universityId], references: [id])
+  industryOrg   IndustryOrg?   @relation(fields: [industryOrgId], references: [id])
+  challenges    Challenge[]    @relation("SubmittedBy")
+  teamMembers   TeamMember[]
+  projectLogs   ProjectLog[]
+  notifications Notification[]
+  deliverables  Deliverable[]  @relation("SubmittedByUser")
+  approvals     Approval[]     @relation("ApproverUser")
+}
+
+model Institution {
+  id                   Int      @id @default(autoincrement())
+  name                 String
+  type                 String // Academic Institution, Research Lab, etc.
+  district             String?
+  description          String?
+  expertise            String   @default("[]") // JSON array stored as text (SQLite)
+  departments          String   @default("[]") // JSON array
+  researchAreas        String   @default("[]") // JSON array
+  innovationFacilities String   @default("[]") // JSON array
+  affiliationId        String?
+  contactDesignation   String?
+  preferredCategories  String   @default("[]")
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  users     User[]
+  projects  Project[]
+  decisions InstitutionDecision[]
+}
+
+model IndustryOrg {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  type                String // startup, msme, csr, research_lab
+  focusAreas          String   @default("[]") // JSON array
+  district            String?
+  active              Boolean  @default(true)
+  registrationNumber  String?
+  contactDesignation  String?
+  expertise           String   @default("[]")
+  preferredCategories String   @default("[]")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  users     User[]
+  interests PartnerInterest[]
+}
+
+model Challenge {
+  id                  Int       @id @default(autoincrement())
+  displayId           String    @unique // JH-2026-0001
+  title               String
+  description         String
+  citizenOriginalText String?
+  aiAssisted          Boolean   @default(false)
+  category            String
+  subcategory         String?
+  mediaUrls           String    @default("[]") // JSON array
+  documentUrls        String    @default("[]") // JSON array
+  hasVideo            Boolean   @default(false)
+  latitude            Float?
+  longitude           Float?
+  district            String?
+  block               String?
+  village             String?
+  status              String    @default("Submitted") // Submitted, Under Review, Verified, Matched, Assigned, Rejected, Closed
+  severity            String? // Low, Medium, High, Critical
+  priorityScore       Int? // 0-100
+  priorityLevel       String? // Low, Medium, High, Critical
+  aiConfidence        Float? // 0.0-1.0
+  aiSummary           String?
+  aiProviderUsed      String? // gemini, grok, local
+  severityReason      String?
+  detectedObjects     String    @default("[]") // JSON array
+  requiredExpertise   String    @default("[]") // JSON array
+  peopleAffected      Int?
+  rejectionReason     String?
+  submittedById       Int
+  assignedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  submittedBy          User                  @relation("SubmittedBy", fields: [submittedById], references: [id])
+  projects             Project[]
+  notifications        Notification[]        @relation("ChallengeNotif")
+  institutionDecisions InstitutionDecision[]
+}
+
+model InstitutionDecision {
+  id            Int      @id @default(autoincrement())
+  challengeId   Int
+  institutionId Int
+  decision      String
+  createdAt     DateTime @default(now())
+
+  challenge   Challenge   @relation(fields: [challengeId], references: [id])
+  institution Institution @relation(fields: [institutionId], references: [id])
+
+  @@unique([challengeId, institutionId])
+}
+
+model Project {
+  id                    Int       @id @default(autoincrement())
+  displayId             String    @unique // PRJ-2026-0001
+  challengeId           Int
+  universityId          Int
+  title                 String
+  status                String    @default("Accepted") // Accepted, Team Formation, Solution Proposal, Admin Approval, In Progress, Prototype/Pilot, Implemented, Impact Evaluation, Closed, Discontinued
+  proposedSolution      String?
+  expectedOutcome       String?
+  estimatedDurationDays Int?
+  requiredSkills        String    @default("[]") // JSON array
+  startDate             DateTime?
+  targetEndDate         DateTime?
+  actualEndDate         DateTime?
+  discontinuedReason    String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  challenge        Challenge         @relation(fields: [challengeId], references: [id])
+  university       Institution       @relation(fields: [universityId], references: [id])
+  teamMembers      TeamMember[]
+  partnerInterests PartnerInterest[]
+  milestones       Milestone[]
+  approvals        Approval[]
+  testingRecords   TestingRecord[]
+  ipRecords        IPRecord[]
+  outcomeRecords   OutcomeRecord[]
+  projectLogs      ProjectLog[]
+  notifications    Notification[]    @relation("ProjectNotif")
+}
+
+model TeamMember {
+  id        Int      @id @default(autoincrement())
+  projectId Int
+  userId    Int?
+  role      String // faculty_mentor, student
+  memberName String?
+  memberEmail String?
+  department String?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+}
+
+model PartnerInterest {
+  id            Int      @id @default(autoincrement())
+  projectId     Int?
+  challengeId   Int? // Can express interest before project exists
+  industryOrgId Int
+  supportTypes  String   @default("[]") // JSON array: funding, mentorship, technology, prototyping, testing, pilot_deployment, commercialization
+  message       String?
+  status        String   @default("interest_submitted") // interest_submitted, accepted_by_admin, declined
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  project     Project?    @relation(fields: [projectId], references: [id])
+  industryOrg IndustryOrg @relation(fields: [industryOrgId], references: [id])
+}
+
+model Milestone {
+  id          Int       @id @default(autoincrement())
+  projectId   Int
+  title       String
+  description String?
+  dueDate     DateTime?
+  status      String    @default("pending") // pending, in_progress, completed, overdue
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id])
+  deliverables Deliverable[]
+}
+
+model Deliverable {
+  id               Int      @id @default(autoincrement())
+  milestoneId      Int
+  title            String
+  fileUrl          String?
+  submittedById    Int
+  reviewStatus     String   @default("pending") // pending, approved, rejected, revision_requested
+  reviewerComments String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  milestone   Milestone @relation(fields: [milestoneId], references: [id])
+  submittedBy User      @relation("SubmittedByUser", fields: [submittedById], references: [id])
+}
+
+model Approval {
+  id           Int       @id @default(autoincrement())
+  projectId    Int
+  stage        String
+  approverId   Int
+  approverRole String
+  status       String    @default("pending") // pending, approved, rejected
+  comments     String?
+  decidedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  project  Project @relation(fields: [projectId], references: [id])
+  approver User    @relation("ApproverUser", fields: [approverId], references: [id])
+}
+
+model TestingRecord {
+  id            Int      @id @default(autoincrement())
+  projectId     Int
+  testType      String // lab, field, pilot
+  resultSummary String?
+  evidenceUrl   String?
+  submittedByRole String?
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+}
+
+model IPRecord {
+  id              Int      @id @default(autoincrement())
+  projectId       Int
+  type            String // patent, copyright, trade_secret, none
+  status          String   @default("pending")
+  referenceNumber String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id])
+}
+
+model OutcomeRecord {
+  id            Int      @id @default(autoincrement())
+  projectId     Int
+  outcomeType   String // deployed, startup_created, research_paper, discontinued
+  description   String?
+  impactMetrics String? // JSON
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+}
+
+model ProjectLog {
+  id        Int      @id @default(autoincrement())
+  projectId Int
+  actorId   Int
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+  actor   User    @relation(fields: [actorId], references: [id])
+}
+
+model Notification {
+  id                 Int      @id @default(autoincrement())
+  userId             Int
+  message            String
+  type               String? // matched, assigned, status_change, milestone_due, etc.
+  relatedChallengeId Int?
+  relatedInstitutionId Int?
+  relatedProjectId   Int?
+  read               Boolean  @default(false)
+  createdAt          DateTime @default(now())
+
+  user             User       @relation(fields: [userId], references: [id])
+  relatedChallenge Challenge? @relation("ChallengeNotif", fields: [relatedChallengeId], references: [id])
+  relatedProject   Project?   @relation("ProjectNotif", fields: [relatedProjectId], references: [id])
+}
