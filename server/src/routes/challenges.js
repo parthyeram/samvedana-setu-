@@ -12,6 +12,33 @@ const prisma = new PrismaClient();
 
 router.post('/', authenticate, authorize('citizen'), async (req, res) => {
   try {
+    const duplicate = await prisma.challenge.findFirst({
+      where: {
+        status: { not: 'Rejected' },
+        category: req.body.category,
+        subcategory: req.body.subcategory || null,
+        district: req.body.district || null
+      },
+      orderBy: { createdAt: 'asc' },
+      select: { displayId: true }
+    });
+    if (duplicate) {
+      const count = await prisma.challenge.count();
+      const rejected = await prisma.challenge.create({
+        data: {
+          ...req.body,
+          displayId: generateChallengeId(count),
+          status: 'Rejected',
+          rejectionReason: `Similar problem already registered (${duplicate.displayId}).`,
+          submittedById: req.user.id,
+          mediaUrls: JSON.stringify(req.body.mediaUrls || []),
+          documentUrls: JSON.stringify(req.body.documentUrls || []),
+          detectedObjects: JSON.stringify(req.body.detectedObjects || []),
+          requiredExpertise: JSON.stringify(req.body.requiredExpertise || [])
+        }
+      });
+      return res.json({ success: true, duplicate: true, message: 'Similar problem already registered.', data: rejected });
+    }
     const count = await prisma.challenge.count();
     const displayId = generateChallengeId(count);
     
