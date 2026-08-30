@@ -9,6 +9,7 @@
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:seed": "node prisma/seed.js",
+    "db:trim-demo": "node prisma/trim-demo-challenges.js",
     "db:clear-workflow": "node prisma/clear-demo-workflow.js",
     "db:reset": "npx prisma db push --force-reset && node prisma/seed.js",
     "test": "node --experimental-vm-modules node_modules/.bin/jest"
