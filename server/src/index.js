@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { PORT } from './config.js';
+import { GEMINI_API_KEY, GEMINI_MODEL, GROQ_API_KEY, HUGGING_FACE_API_KEY, PORT } from './config.js';
 
 import authRoutes from './routes/auth.js';
 import challengeRoutes from './routes/challenges.js';
@@ -38,4 +38,5 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`SamvedanaSetu Server running on port ${PORT}`);
+  console.log('AI configuration:', { geminiModel: GEMINI_MODEL, geminiKeyPresent: Boolean(GEMINI_API_KEY), groqKeyPresent: Boolean(GROQ_API_KEY), huggingFaceKeyPresent: Boolean(HUGGING_FACE_API_KEY) });
 });
