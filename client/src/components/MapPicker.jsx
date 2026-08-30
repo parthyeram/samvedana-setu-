@@ -35,7 +35,7 @@ export default function MapPicker({ position, onChange }) {
     if (!query.trim()) return;
     setMessage('Searching location...');
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&countrycodes=in&q=${encodeURIComponent(query)}`, { headers: { 'Accept-Language': 'en' } });
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=${encodeURIComponent(query)}`, { headers: { 'Accept-Language': 'en' } });
       const data = await response.json();
       setResults(data);
       setMessage(data.length ? 'Select a search result.' : 'Location not found. Try a nearby town or PIN code.');
