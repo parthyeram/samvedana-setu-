@@ -46,13 +46,13 @@ router.get('/collaborations', authenticate, async (req, res) => {
   const partner = req.user.industryOrgId ? await prisma.industryOrg.findUnique({ where: { id: req.user.industryOrgId } }) : null;
   if (!partner) return res.json({ success: true, data: [] });
   const interests = await prisma.partnerInterest.findMany({ where: { industryOrgId: partner.id }, include: { project: true }, orderBy: { updatedAt: 'desc' } });
-  const directProjects = await prisma.project.findMany({ where: { status: { in: ['Accepted', 'Team Formation', 'Admin Approval', 'Solution Proposal', 'In Progress'] } }, select: { challengeId: true } });
-  const challengeIds = [...new Set([...interests.map(item => item.challengeId).filter(Boolean), ...directProjects.map(item => item.challengeId)])];
+  // Industry users see a problem only after government notification or an institute request.
+  const challengeIds = [...new Set(interests.map(item => item.challengeId).filter(Boolean))];
   const challenges = await prisma.challenge.findMany({ where: { id: { in: challengeIds } }, orderBy: { priorityScore: 'desc' } });
   const data = challenges.map(challenge => {
     const interest = interests.find(item => item.challengeId === challenge.id);
     const match = matchIndustryPartners(challenge, [partner])[0];
-    return { ...challenge, matchScore: match?.matchScore || 0, matchedFocusAreas: match?.matchedFocusAreas || [], industry: { id: partner.id, name: partner.name }, requestStatus: interest?.status, requestSource: interest?.projectId ? 'Institute collaboration request' : interest ? 'Government match notification' : 'Direct Government project opportunity' };
+    return { ...challenge, matchScore: match?.matchScore || 0, matchedFocusAreas: match?.matchedFocusAreas || [], industry: { id: partner.id, name: partner.name }, requestStatus: interest?.status, requestSource: interest?.projectId ? 'Institute collaboration request' : 'Government match notification' };
   });
   res.json({ success: true, data });
 });
