@@ -7,7 +7,8 @@ const router = Router();
 const prisma = new PrismaClient();
 router.get('/directory', authenticate, authorize('industry_partner', 'admin', 'govt_official'), async (req, res) => {
   const organizations = await prisma.industryOrg.findMany({ where: { active: true }, include: { _count: { select: { interests: true } } }, orderBy: { id: 'asc' } });
-  res.json({ success: true, data: organizations.map(item => ({ ...item, capabilities: [...JSON.parse(item.expertise || '[]'), ...JSON.parse(item.focusAreas || '[]')], preferredCategories: JSON.parse(item.preferredCategories || '[]'), resources: JSON.parse(item.focusAreas || '[]'), projects: item._count.interests })) });
+  const challenges = await prisma.challenge.findMany({ where: { status: { not: 'Rejected' } }, orderBy: { priorityScore: 'desc' } });
+  res.json({ success: true, data: organizations.map(item => ({ ...item, capabilities: [...JSON.parse(item.expertise || '[]'), ...JSON.parse(item.focusAreas || '[]')], preferredCategories: JSON.parse(item.preferredCategories || '[]'), resources: JSON.parse(item.focusAreas || '[]'), projects: item._count.interests, problems: matchIndustryPartners(challenges[0] || {}, [item]).length ? challenges.map(challenge => ({ ...challenge, matchScore: matchIndustryPartners(challenge, [item])[0]?.matchScore || 0 })).filter(challenge => challenge.matchScore > 0).slice(0, 10) : [] })) });
 });
 router.get('/partners/:challengeId', authenticate, authorize('university_admin', 'faculty_mentor'), async (req, res) => {
   try {
