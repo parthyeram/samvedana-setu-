@@ -9,18 +9,26 @@ import { analyzeChallenge } from '../services/ai.js';
 
 const router = Router();
 const prisma = new PrismaClient();
+const normalizeLocation = value => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
 router.post('/', authenticate, authorize('citizen'), async (req, res) => {
   try {
-    const duplicate = await prisma.challenge.findFirst({
+    const candidates = await prisma.challenge.findMany({
       where: {
         status: { not: 'Rejected' },
         category: req.body.category,
-        subcategory: req.body.subcategory || null,
-        district: req.body.district || null
+        subcategory: req.body.subcategory || null
       },
       orderBy: { createdAt: 'asc' },
-      select: { displayId: true }
+      select: { displayId: true, district: true, latitude: true, longitude: true }
+    });
+    const submittedLocation = normalizeLocation(req.body.district);
+    const duplicate = candidates.find(item => {
+      const sameTextLocation = submittedLocation && normalizeLocation(item.district) === submittedLocation;
+      const sameCoordinates = req.body.latitude != null && req.body.longitude != null && item.latitude != null && item.longitude != null
+        && Math.abs(Number(item.latitude) - Number(req.body.latitude)) < 0.001
+        && Math.abs(Number(item.longitude) - Number(req.body.longitude)) < 0.001;
+      return sameTextLocation || sameCoordinates;
     });
     if (duplicate) {
       const count = await prisma.challenge.count();
