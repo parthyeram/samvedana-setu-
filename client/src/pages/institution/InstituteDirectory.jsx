@@ -14,7 +14,7 @@ export default function InstituteDirectory() {
 
   const reloadMatches = () => getMatchedChallenges().then(response => setMatches(response.data?.data || []));
   useEffect(() => { Promise.all([getInstitutions(), reloadMatches()]).then(([directory]) => setItems(directory.data?.data || [])).catch(requestError => setError(requestError.response?.data?.error || 'Could not load institutes. Start the backend server and refresh.')).finally(() => setLoading(false)); }, []);
-  const respond = (id, action, institutionId) => (action === 'accept' ? acceptChallenge(id, { institutionId }).then(() => navigate(`/institution/accept/${id}?institutionId=${institutionId}`)) : declineChallenge(id, { institutionId })).then(reloadMatches).catch(() => {});
+  const respond = (id, action, institutionId) => (action === 'accept' ? acceptChallenge(id, { institutionId }).then(() => navigate('/institution/projects')) : declineChallenge(id, { institutionId })).then(reloadMatches).catch(() => {});
 
   if (loading) return <div><div className="page-head"><h2>All institutes</h2><p>Explore each institute's location, capability, and expertise.</p></div><div className="card card-pad">Loading institute directory...</div></div>;
   if (error) return <div><div className="page-head"><h2>All institutes</h2></div><div className="card card-pad"><h3>Institute directory unavailable</h3><p className="text-muted">{error}</p></div></div>;

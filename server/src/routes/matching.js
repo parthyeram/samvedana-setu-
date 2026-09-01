@@ -53,7 +53,9 @@ router.post('/notify/:challengeId', authenticate, authorize('admin', 'govt_offic
     await Promise.all(recipients.map(user => prisma.notification.create({ data: { userId: user.id, message: `Problem ${challenge.displayId} was matched to ${organizationType === 'institution' ? 'the selected institute' : 'your organization'}. Review and respond.`, type: 'matched', relatedChallengeId: challenge.id, relatedInstitutionId: organizationType === 'institution' ? organizationId : undefined } })));
     if (organizationType === 'industry') {
       const existing = await prisma.partnerInterest.findFirst({ where: { challengeId, industryOrgId: organizationId } });
-      if (!existing) await prisma.partnerInterest.create({ data: { challengeId, industryOrgId: organizationId, supportTypes: JSON.stringify(['expertise']), message: `Matched by government at ${req.body.matchScore || 'available'}% score.` } });
+      const project = await prisma.project.findFirst({ where: { challengeId, status: { not: 'Closed' } } });
+      if (!existing) await prisma.partnerInterest.create({ data: { challengeId, projectId: project?.id, industryOrgId: organizationId, supportTypes: JSON.stringify(['expertise']), message: `Matched by government at ${req.body.matchScore || 'available'}% score.` } });
+      else if (!existing.projectId && project) await prisma.partnerInterest.update({ where: { id: existing.id }, data: { projectId: project.id } });
     }
     await prisma.challenge.update({ where: { id: challengeId }, data: { status: 'Organizations Notified' } });
     res.json({ success: true, data: { notified: recipients.length } });
