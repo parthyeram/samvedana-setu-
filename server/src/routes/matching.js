@@ -49,7 +49,7 @@ router.post('/notify/:challengeId', authenticate, authorize('admin', 'govt_offic
     }
     const where = organizationType === 'industry' ? { industryOrgId: organizationId, accountStatus: 'active' } : { email: 'institution@demo.in', accountStatus: 'active' };
     const recipients = await prisma.user.findMany({ where });
-    if (!recipients.length) return res.status(400).json({ success: false, error: 'The shared Institute/University account is not active. Use institution@demo.in or approve that account first.' });
+    if (!recipients.length && organizationType !== 'industry') return res.status(400).json({ success: false, error: 'The shared Institute/University account is not active. Use institution@demo.in or approve that account first.' });
     await Promise.all(recipients.map(user => prisma.notification.create({ data: { userId: user.id, message: `Problem ${challenge.displayId} was matched to ${organizationType === 'institution' ? 'the selected institute' : 'your organization'}. Review and respond.`, type: 'matched', relatedChallengeId: challenge.id, relatedInstitutionId: organizationType === 'institution' ? organizationId : undefined } })));
     if (organizationType === 'industry') {
       const existing = await prisma.partnerInterest.findFirst({ where: { challengeId, industryOrgId: organizationId } });
@@ -58,7 +58,7 @@ router.post('/notify/:challengeId', authenticate, authorize('admin', 'govt_offic
       else if (!existing.projectId && project) await prisma.partnerInterest.update({ where: { id: existing.id }, data: { projectId: project.id } });
     }
     await prisma.challenge.update({ where: { id: challengeId }, data: { status: 'Organizations Notified' } });
-    res.json({ success: true, data: { notified: recipients.length } });
+    res.json({ success: true, data: { notified: recipients.length, assigned: organizationType === 'industry' } });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 

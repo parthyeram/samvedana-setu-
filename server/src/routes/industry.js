@@ -14,7 +14,9 @@ router.get('/directory', authenticate, authorize('industry_partner', 'admin', 'g
 });
 router.get('/partners/:challengeId', authenticate, authorize('university_admin', 'faculty_mentor'), async (req, res) => {
   try {
-    const challenge = await prisma.challenge.findUnique({ where: { id: Number(req.params.challengeId) } });
+    const challengeId = Number(req.params.challengeId);
+    if (!Number.isInteger(challengeId)) return res.status(400).json({ success: false, error: 'Invalid challenge ID' });
+    const challenge = await prisma.challenge.findUnique({ where: { id: challengeId } });
     if (!challenge) return res.status(404).json({ success: false, error: 'Challenge not found' });
     const partners = await prisma.industryOrg.findMany({ where: { active: true }, orderBy: { id: 'asc' } });
     const existing = await prisma.partnerInterest.findMany({ where: { challengeId }, select: { industryOrgId: true, status: true } });
