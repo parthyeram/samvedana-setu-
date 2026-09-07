@@ -104,6 +104,7 @@ router.post('/:id/team', authenticate, authorize('university_admin', 'faculty_me
     const created = await Promise.all(members.filter(member => member.name?.trim() || member.memberName?.trim() || member.userId).map(member => prisma.teamMember.create({ data: { projectId: Number(req.params.id), userId: member.userId ? Number(member.userId) : undefined, role: member.role, memberName: member.name || member.memberName, memberEmail: member.email, department: member.department } })));
     await prisma.project.update({ where: { id: Number(req.params.id) }, data: { status: 'Team Formation' } });
     const project = await prisma.project.findUnique({ where: { id: Number(req.params.id) }, include: { challenge: true, university: true } });
+    await prisma.challenge.update({ where: { id: project.challengeId }, data: { status: 'Team Formation' } });
     const existingApproval = await prisma.approval.findFirst({ where: { projectId: project.id, stage: 'Organization Approval', status: 'pending' } });
     if (!existingApproval) {
       await prisma.approval.create({ data: { projectId: project.id, stage: 'Organization Approval', approverId: req.user.id, approverRole: req.user.role, status: 'pending', comments: 'Institute team formed and submitted for Government organizational approval.' } });
@@ -127,6 +128,7 @@ router.patch('/:id/organization-approval', authenticate, authorize('admin', 'gov
     const status = req.body.status === 'approved' ? 'approved' : 'rejected';
     const updated = await prisma.approval.update({ where: { id: approval.id }, data: { status, approverId: req.user.id, approverRole: req.user.role, comments: req.body.comments, decidedAt: new Date() } });
     await prisma.project.update({ where: { id: approval.projectId }, data: { status: status === 'approved' ? 'Admin Approval' : 'Team Formation' } });
+    await prisma.challenge.update({ where: { id: approval.project.challengeId }, data: { status: status === 'approved' ? 'Admin Approval' : 'Team Formation' } });
     const instituteUsers = await prisma.user.findMany({ where: { universityId: approval.project.universityId, accountStatus: 'active' }, select: { id: true } });
     await Promise.all(instituteUsers.map(user => prisma.notification.create({ data: { userId: user.id, message: `Government ${status} the project team for ${approval.project.challenge.displayId}.`, type: 'organization_approval', relatedChallengeId: approval.project.challengeId, relatedProjectId: approval.projectId } })));
     res.json({ success: true, data: updated });
@@ -148,14 +150,15 @@ router.post('/:id/testing', authenticate, async (req, res) => {
     const projectId = Number(req.params.id);
     const project = await prisma.project.findUnique({ where: { id: projectId }, include: { partnerInterests: true } });
     const collaboration = project?.partnerInterests?.some(item => item.status === 'accepted');
+    if (collaboration && req.body.testType === 'solution' && req.user.role !== 'industry_partner') return res.status(403).json({ success: false, error: 'After collaboration is accepted, only the industry partner can submit the final solution.' });
     if (collaboration && req.body.testType === 'solution') {
-      const existing = await prisma.testingRecord.findFirst({ where: { projectId, testType: 'prototype' } });
-      if (existing) return res.status(409).json({ success: false, error: 'A shared solution has already been submitted for this collaboration.' });
+      const existing = await prisma.testingRecord.findFirst({ where: { projectId, testType: 'solution' } });
+      if (existing) return res.status(409).json({ success: false, error: 'A final solution has already been submitted for this collaboration.' });
     }
-    const item = await prisma.testingRecord.create({ data: { projectId, testType: collaboration ? 'prototype' : req.body.testType, resultSummary: req.body.resultSummary, evidenceUrl: req.body.evidenceUrl, submittedByRole: collaboration ? req.user.role : undefined } });
+    const item = await prisma.testingRecord.create({ data: { projectId, testType: collaboration ? 'solution' : req.body.testType, resultSummary: req.body.resultSummary, evidenceUrl: req.body.evidenceUrl, submittedByRole: collaboration ? req.user.role : undefined } });
     if (collaboration) {
       await prisma.project.update({ where: { id: projectId }, data: { status: 'Submitted' } });
-      await prisma.challenge.update({ where: { id: project.challengeId }, data: { status: 'Closed' } });
+      await prisma.challenge.update({ where: { id: project.challengeId }, data: { status: 'Government Review' } });
     }
     res.json({ success: true, data: item });
   }
