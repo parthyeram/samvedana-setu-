@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { FaBars, FaBell, FaGlobe, FaUserCircle } from 'react-icons/fa';
+import { FaBars, FaBell, FaUserCircle } from 'react-icons/fa';
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -34,10 +34,9 @@ export default function Layout() {
         ,{ to: '/institution/dashboard', label: t('dashboard') }
       ];
       case 'industry_partner': return [
-        { to: '/industry/directory', label: 'All Industries' },
         { to: '/industry/collaborations', label: 'Matched Projects' },
         { to: '/industry/interests', label: 'Collaboration Requests' },
-        { to: '/industry/accepted', label: 'Accepted Collaboration' },
+        { to: '/industry/accepted', label: 'Manage Teams' },
         { to: '/industry/dashboard', label: t('dashboard') }
       ];
       default: return [];
@@ -67,7 +66,6 @@ export default function Layout() {
           <button className="hamburger icon-btn" onClick={() => setSidebarOpen(true)}><FaBars /></button>
           <div className="topbar-spacer"></div>
           <span className="proto-badge">Prototype Demo</span>
-          <button className="icon-btn" onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}><FaGlobe /></button>
           {user?.role !== 'admin' && user?.role !== 'govt_official' && <button className="icon-btn" onClick={() => navigate('/notifications')}><FaBell /></button>}
           <div className="avatar">{user?.name?.charAt(0) || 'U'}</div>
         </header>
