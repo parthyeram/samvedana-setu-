@@ -106,7 +106,7 @@ router.get('/', authenticate, scopeToOrg, async (req, res) => {
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const challengeId = Number(req.params.id);
-    const challenge = await prisma.challenge.findUnique({ where: { id: challengeId }, include: { submittedBy: { select: { name: true } }, projects: { select: { id: true, status: true, testingRecords: true, partnerInterests: { select: { status: true } } }, orderBy: { updatedAt: 'desc' }, take: 1 } } });
+    const challenge = await prisma.challenge.findUnique({ where: { id: challengeId }, include: { submittedBy: { select: { name: true } }, projects: { select: { id: true, status: true, university: { select: { name: true } }, testingRecords: true, partnerInterests: { select: { status: true, industryOrg: { select: { name: true, type: true } } } } }, orderBy: { updatedAt: 'desc' }, take: 1 } } });
     if (!challenge) return res.status(404).json({ success: false, error: 'Problem not found' });
 
     if (req.user.role === 'citizen' && challenge.submittedById !== req.user.id) return res.status(403).json({ success: false, error: 'This problem belongs to another citizen.' });
