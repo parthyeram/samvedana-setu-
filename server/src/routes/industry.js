@@ -6,7 +6,8 @@ import { matchIndustryPartners } from '../services/matching.js';
 const router = Router();
 const prisma = new PrismaClient();
 router.get('/directory', authenticate, authorize('industry_partner', 'admin', 'govt_official'), async (req, res) => {
-  const organizations = await prisma.industryOrg.findMany({ where: { active: true }, include: { _count: { select: { interests: true } } }, orderBy: { id: 'asc' } });
+  const industryScope = req.user.role === 'industry_partner' ? { id: req.user.industryOrgId || -1 } : {};
+  const organizations = await prisma.industryOrg.findMany({ where: { active: true, ...industryScope }, include: { _count: { select: { interests: true } } }, orderBy: { id: 'asc' } });
   const challenges = await prisma.challenge.findMany({ where: { status: { not: 'Rejected' } }, orderBy: { priorityScore: 'desc' } });
   const notified = await prisma.partnerInterest.findMany({ select: { industryOrgId: true, challengeId: true } });
   const notifiedByIndustry = notified.reduce((groups, item) => { (groups[item.industryOrgId] ||= new Set()).add(item.challengeId); return groups; }, {});
@@ -43,13 +44,14 @@ router.post('/request/:challengeId', authenticate, authorize('university_admin',
       await Promise.all(recipients.map(user => prisma.notification.create({ data: { userId: user.id, message: `Institution requested your support for ${challengeId}. Review expertise, funding, equipment, or deployment needs.`, type: 'collaboration', relatedChallengeId: challengeId, relatedProjectId: project.id } })));
     }
     await prisma.challenge.update({ where: { id: challengeId }, data: { status: 'Collaboration Requested' } });
+    await prisma.project.update({ where: { id: project.id }, data: { status: 'Industry Collaboration' } });
     res.json({ success: true, data: interest, notified: recipients.length });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 router.get('/collaborations', authenticate, async (req, res) => {
   const partner = req.user.industryOrgId ? await prisma.industryOrg.findUnique({ where: { id: req.user.industryOrgId } }) : null;
   if (!partner) return res.json({ success: true, data: [] });
-  const interests = await prisma.partnerInterest.findMany({ where: { industryOrgId: partner.id }, include: { project: true }, orderBy: { updatedAt: 'desc' } });
+  const interests = await prisma.partnerInterest.findMany({ where: { industryOrgId: partner.id }, include: { project: { include: { challenge: true } }, challenge: true }, orderBy: { updatedAt: 'desc' } });
   // Industry users see a problem only after government notification or an institute request.
   const challengeIds = [...new Set(interests.map(item => item.challengeId).filter(Boolean))];
   const challenges = await prisma.challenge.findMany({ where: { id: { in: challengeIds } }, orderBy: { priorityScore: 'desc' } });
@@ -80,7 +82,8 @@ router.patch('/interests/:id', authenticate, authorize('industry_partner'), asyn
   if (!project) return res.status(400).json({ success: false, error: 'The institute must accept this problem before an industry team can be formed.' });
   const status = req.body.status === 'accepted' ? 'accepted' : 'declined';
   const updated = await prisma.partnerInterest.update({ where: { id: interest.id }, data: { status } });
-  if (status === 'accepted') await prisma.challenge.update({ where: { id: challenge.id }, data: { status: 'Collaboration Accepted' } });
+  await prisma.challenge.update({ where: { id: challenge.id }, data: { status: status === 'accepted' ? 'Collaboration Accepted' : 'Assigned' } });
+  await prisma.project.update({ where: { id: project.id }, data: { status: status === 'accepted' ? 'Collaboration Accepted' : 'Team Formation' } });
    await prisma.notification.create({ data: { userId: challenge.submittedById, message: `Industry collaboration request for ${challenge.displayId} was ${status}.`, type: 'collaboration', relatedChallengeId: challenge.id } });
    if (status === 'accepted' && project.universityId) { const instituteUsers = await prisma.user.findMany({ where: { universityId: project.universityId, accountStatus: 'active' }, select: { id: true } }); await Promise.all(instituteUsers.map(user => prisma.notification.create({ data: { userId: user.id, message: `Industry collaboration for ${challenge.displayId} was accepted.`, type: 'collaboration', relatedChallengeId: challenge.id, relatedProjectId: project.id } }))); }
   res.json({ success: true, data: updated });
