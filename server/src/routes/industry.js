@@ -51,7 +51,7 @@ router.post('/request/:challengeId', authenticate, authorize('university_admin',
 router.get('/collaborations', authenticate, async (req, res) => {
   const partner = req.user.industryOrgId ? await prisma.industryOrg.findUnique({ where: { id: req.user.industryOrgId } }) : null;
   if (!partner) return res.json({ success: true, data: [] });
-  const interests = await prisma.partnerInterest.findMany({ where: { industryOrgId: partner.id }, include: { project: { include: { challenge: true } }, challenge: true }, orderBy: { updatedAt: 'desc' } });
+  const interests = await prisma.partnerInterest.findMany({ where: { industryOrgId: partner.id }, include: { project: { include: { challenge: true } } }, orderBy: { updatedAt: 'desc' } });
   // Industry users see a problem only after government notification or an institute request.
   const challengeIds = [...new Set(interests.map(item => item.challengeId).filter(Boolean))];
   const challenges = await prisma.challenge.findMany({ where: { id: { in: challengeIds } }, orderBy: { priorityScore: 'desc' } });
@@ -70,8 +70,11 @@ router.post('/interest', authenticate, authorize('industry_partner'), async (req
 router.get('/my-interests', authenticate, async (req, res) => {
   const account = await prisma.user.findUnique({ where: { id: req.user.id }, select: { industryOrgId: true } });
   if (!account?.industryOrgId) return res.json({ success: true, data: [] });
-  const data = await prisma.partnerInterest.findMany({ where: { industryOrgId: account.industryOrgId }, include: { challenge: true, project: { include: { challenge: true } }, industryOrg: true }, orderBy: { updatedAt: 'desc' } });
-  res.json({ success: true, data });
+  const interests = await prisma.partnerInterest.findMany({ where: { industryOrgId: account.industryOrgId }, include: { project: { include: { challenge: true } }, industryOrg: true }, orderBy: { updatedAt: 'desc' } });
+  const challengeIds = [...new Set(interests.map(item => item.challengeId).filter(Boolean))];
+  const challenges = await prisma.challenge.findMany({ where: { id: { in: challengeIds } } });
+  const challengeById = new Map(challenges.map(challenge => [challenge.id, challenge]));
+  res.json({ success: true, data: interests.map(item => ({ ...item, challenge: challengeById.get(item.challengeId) || null })) });
 });
 router.patch('/interests/:id', authenticate, authorize('industry_partner'), async (req, res) => {
   const interest = await prisma.partnerInterest.findFirst({ where: { id: Number(req.params.id), industryOrgId: req.user.industryOrgId }, include: { project: { include: { challenge: true } }, industryOrg: true } });
