@@ -737,6 +737,10 @@ input::placeholder, textarea::placeholder { color: #71809a; }
 @media (max-width: 900px) { .sidebar { height: 70px; padding: 0 16px; } .sidebar .brand { min-width: 0; } .sidebar .brand b { font-size: 16px; } .sidebar .brand small { display: none; } .sidebar .nav-item { display: none; } .sidebar .nav-item.active { display: block; margin-left: auto; } .sidebar .mt-16 { display: block; margin-left: 0; } .main { margin-top: 70px; padding: 0 16px 24px; } .topbar { margin: 0 -16px 22px; padding: 0 16px; } }
 .topbar { height: var(--header-h); background: rgba(8, 13, 25, .7); border-bottom: 1px solid var(--setu-line); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
 @media (max-width: 700px) { .map-toolbar { grid-template-columns: 1fr; } .insight-grid { grid-template-columns: 1fr; gap: 16px; } }
+.leaflet-container { min-height: 220px; }
+button, a, input, select, textarea { touch-action: manipulation; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #0b8fa3; outline-offset: 3px; }
+@media (max-width: 600px) { .content { padding-left: 10px; padding-right: 10px; } .card-pad { padding: 16px; } .field-row, .choice-grid { grid-template-columns: 1fr; } .flow-steps { display: grid; grid-template-columns: 1fr; gap: 6px; } .flow-step { width: 100%; justify-content: flex-start; } .leaflet-container { height: 240px !important; } .btn { min-height: 44px; } .btn-sm { min-height: 40px; } }
 .report-layout > .card:first-child { display: flex; flex-direction: column; }
 .report-layout > .card:first-child > .field:nth-child(1) { order: 1; }
 .report-layout > .card:first-child > .field:nth-child(2) { order: 2; }

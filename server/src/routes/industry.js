@@ -68,7 +68,7 @@ router.post('/interest', authenticate, authorize('industry_partner'), async (req
   res.json({ success: true, data: interest });
 });
 router.get('/my-interests', authenticate, async (req, res) => {
-  const data = await prisma.partnerInterest.findMany({ where: { industryOrgId: req.user.industryOrgId }, include: { project: { include: { challenge: true } }, industryOrg: true } });
+  const data = await prisma.partnerInterest.findMany({ where: { industryOrgId: req.user.industryOrgId }, include: { challenge: true, project: { include: { challenge: true } }, industryOrg: true }, orderBy: { updatedAt: 'desc' } });
   res.json({ success: true, data });
 });
 router.patch('/interests/:id', authenticate, authorize('industry_partner'), async (req, res) => {

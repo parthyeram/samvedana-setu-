@@ -10,6 +10,8 @@ import { analyzeChallenge } from '../services/ai.js';
 const router = Router();
 const prisma = new PrismaClient();
 const normalizeLocation = value => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const words = value => new Set(String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(/\s+/).filter(word => word.length > 2));
+const textSimilarity = (left, right) => { const a = words(left); const b = words(right); if (!a.size || !b.size) return 0; const intersection = [...a].filter(word => b.has(word)).length; return intersection / new Set([...a, ...b]).size; };
 
 router.post('/', authenticate, authorize('citizen'), async (req, res) => {
   try {
@@ -20,7 +22,7 @@ router.post('/', authenticate, authorize('citizen'), async (req, res) => {
         subcategory: req.body.subcategory || null
       },
       orderBy: { createdAt: 'asc' },
-      select: { displayId: true, district: true, latitude: true, longitude: true }
+      select: { displayId: true, district: true, latitude: true, longitude: true, description: true, mediaUrls: true }
     });
     const submittedLocation = normalizeLocation(req.body.district);
     const duplicate = candidates.find(item => {
@@ -28,7 +30,11 @@ router.post('/', authenticate, authorize('citizen'), async (req, res) => {
       const sameCoordinates = req.body.latitude != null && req.body.longitude != null && item.latitude != null && item.longitude != null
         && Math.abs(Number(item.latitude) - Number(req.body.latitude)) < 0.001
         && Math.abs(Number(item.longitude) - Number(req.body.longitude)) < 0.001;
-      return sameTextLocation || sameCoordinates;
+      const similarDescription = textSimilarity(item.description, req.body.description) >= 0.65;
+      const currentMedia = Array.isArray(req.body.mediaUrls) ? req.body.mediaUrls : [];
+      const previousMedia = JSON.parse(item.mediaUrls || '[]');
+      const sameImage = currentMedia.length > 0 && previousMedia.some(url => currentMedia.includes(url));
+      return sameTextLocation || sameCoordinates || similarDescription || sameImage;
     });
     if (duplicate) {
       const count = await prisma.challenge.count();

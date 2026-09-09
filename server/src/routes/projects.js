@@ -135,6 +135,20 @@ router.patch('/:id/organization-approval', authenticate, authorize('admin', 'gov
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+router.patch('/:id/final-approval', authenticate, authorize('admin', 'govt_official'), async (req, res) => {
+  try {
+    const project = await prisma.project.findUnique({ where: { id: Number(req.params.id) }, include: { challenge: true } });
+    if (!project) return res.status(404).json({ success: false, error: 'Project not found.' });
+    const status = req.body.status === 'approved' ? 'approved' : 'rejected';
+    if (status === 'rejected' && !String(req.body.comments || '').trim()) return res.status(400).json({ success: false, error: 'Rejection comments are required.' });
+    const updated = await prisma.approval.create({ data: { projectId: project.id, stage: 'Final Submission', approverId: req.user.id, approverRole: req.user.role, status, comments: req.body.comments || 'Final solution approved.', decidedAt: new Date() } });
+    await prisma.project.update({ where: { id: project.id }, data: { status: status === 'approved' ? 'Closed' : 'Needs Revision' } });
+    await prisma.challenge.update({ where: { id: project.challengeId }, data: { status: status === 'approved' ? 'Resolved' : 'Needs Revision' } });
+    await prisma.notification.create({ data: { userId: project.challenge.submittedById, message: `Government ${status} the final solution for ${project.challenge.displayId}.${status === 'rejected' ? ` Feedback: ${req.body.comments}` : ''}`, type: 'final_review', relatedChallengeId: project.challengeId, relatedProjectId: project.id } });
+    res.json({ success: true, data: updated });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 router.post('/:id/milestones', authenticate, async (req, res) => {
   try { const item = await prisma.milestone.create({ data: { projectId: Number(req.params.id), title: req.body.title, description: req.body.description, dueDate: req.body.dueDate ? new Date(req.body.dueDate) : undefined } }); res.json({ success: true, data: item }); }
   catch (err) { res.status(500).json({ success: false, error: err.message }); }
@@ -157,7 +171,7 @@ router.post('/:id/testing', authenticate, async (req, res) => {
     }
     const item = await prisma.testingRecord.create({ data: { projectId, testType: collaboration ? 'solution' : req.body.testType, resultSummary: req.body.resultSummary, evidenceUrl: req.body.evidenceUrl, submittedByRole: collaboration ? req.user.role : undefined } });
     if (collaboration) {
-      await prisma.project.update({ where: { id: projectId }, data: { status: 'Submitted' } });
+      await prisma.project.update({ where: { id: projectId }, data: { status: 'Government Review' } });
       await prisma.challenge.update({ where: { id: project.challengeId }, data: { status: 'Government Review' } });
     }
     res.json({ success: true, data: item });

@@ -56,6 +56,7 @@ export const submitApproval = (id, data) => api.post(`/projects/${id}/approvals`
 export const getProjectApprovalRequests = () => api.get('/projects/approval-requests/pending');
 export const getProjectTracking = () => api.get('/projects/tracking');
 export const decideProjectOrganizationApproval = (id, data) => api.patch(`/projects/${id}/organization-approval`, data);
+export const decideProjectFinalApproval = (id, data) => api.patch(`/projects/${id}/final-approval`, data);
 
 // Institutions
 export const getMatchedChallenges = () => api.get('/institutions/matched-challenges');

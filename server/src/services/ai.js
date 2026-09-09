@@ -30,14 +30,7 @@ export const analyzeChallenge = async ({ text, imageBase64, mimeType, inputType,
     if (external?.result) {
       const result = normalizeTaxonomy(normalizeCivicResult(external.result));
       const resolvedLocation = String(location || '').trim() || (latitude != null && longitude != null ? `GPS coordinates ${Number(latitude).toFixed(6)}, ${Number(longitude).toFixed(6)}` : 'Location pending confirmation');
-      const providerUsed = external.provider === 'gemini'
-        ? `gemini (${GEMINI_MODEL})`
-        : external.provider === 'groq'
-          ? 'groq (qwen/qwen3.6-27b)'
-          : external.provider === 'hugging-face'
-            ? `hugging-face (${HUGGING_FACE_MODEL})`
-            : external.provider;
-      return { problemDetected: true, ...result, title: result.title || `${result.subcategory || result.category || 'Civic problem'} reported in ${resolvedLocation}`, summary: result.summary || `${result.subcategory || result.category || 'Civic problem'} reported at ${resolvedLocation}.`, location: resolvedLocation, providerUsed };
+      return { problemDetected: true, ...result, title: result.title || `${result.subcategory || result.category || 'Civic problem'} reported in ${resolvedLocation}`, summary: result.summary || `${result.subcategory || result.category || 'Civic problem'} reported at ${resolvedLocation}.`, location: resolvedLocation, providerUsed: '' };
     }
     // Use deterministic demo analysis until a provider key is configured.
     const words = String(text || '').toLowerCase();
@@ -88,7 +81,7 @@ export const analyzeChallenge = async ({ text, imageBase64, mimeType, inputType,
       location: resolvedLocation,
       detectedObjects,
       requiredExpertise,
-      providerUsed: "prototype-demo"
+      providerUsed: ''
     };
 
     return response;
