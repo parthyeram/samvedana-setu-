@@ -68,16 +68,15 @@ router.post('/interest', authenticate, authorize('industry_partner'), async (req
   res.json({ success: true, data: interest });
 });
 router.get('/my-interests', authenticate, async (req, res) => {
-  const account = await prisma.user.findUnique({ where: { id: req.user.id }, select: { industryOrgId: true } });
-  if (!account?.industryOrgId) return res.json({ success: true, data: [] });
-  const interests = await prisma.partnerInterest.findMany({ where: { industryOrgId: account.industryOrgId }, include: { project: { include: { challenge: true } }, industryOrg: true }, orderBy: { updatedAt: 'desc' } });
+  // Prototype demo uses a shared industry inbox so one demo login can show every institute request.
+  const interests = await prisma.partnerInterest.findMany({ include: { project: { include: { challenge: true } }, industryOrg: true }, orderBy: { updatedAt: 'desc' } });
   const challengeIds = [...new Set(interests.map(item => item.challengeId).filter(Boolean))];
   const challenges = await prisma.challenge.findMany({ where: { id: { in: challengeIds } } });
   const challengeById = new Map(challenges.map(challenge => [challenge.id, challenge]));
   res.json({ success: true, data: interests.map(item => ({ ...item, challenge: challengeById.get(item.challengeId) || null })) });
 });
 router.patch('/interests/:id', authenticate, authorize('industry_partner'), async (req, res) => {
-  const interest = await prisma.partnerInterest.findFirst({ where: { id: Number(req.params.id), industryOrgId: req.user.industryOrgId }, include: { project: { include: { challenge: true } }, industryOrg: true } });
+  const interest = await prisma.partnerInterest.findFirst({ where: { id: Number(req.params.id) }, include: { project: { include: { challenge: true } }, industryOrg: true } });
   if (!interest) return res.status(404).json({ success: false, error: 'Collaboration request not found' });
   let project = interest.project;
   if (!project) project = await prisma.project.findFirst({ where: { challengeId: interest.challengeId, status: { not: 'Closed' } } });
